@@ -1,0 +1,274 @@
+{
+  "skill": "explain",
+  "skill_path": "skills/explain/SKILL.md",
+  "created": "2026-09-17",
+  "updated": "2026-09-17",
+  "graded_revision": {
+    "sha256": "e0186f2afa2cecd277b5d89ab8a31557d7547f1fe87249c8bc82366e11c10bc5",
+    "lines": 366,
+    "bytes": 31889,
+    "note": "final revision named by the SKILL.md owner"
+  },
+  "status_note": "Results live in results/skill-<sha8>.json; each file embeds the sha256 of the SKILL.md actually used, the model, the fixture ground truth, the full prompt, the full output, the raw rubric verdict and any adjudicated re-grade. Only final-hash results count as final.",
+  "contract_under_test": {
+    "moment_a": "spec/plan just written (approved or not) -> exactly one explain-permission question, then stop; no output sections. Moment comes from the task phase; pre-existing old code must not flip A to B.",
+    "moment_b": "implementation just finished -> explain in the same turn; no permission question",
+    "moment_c": "user asks -> request is the consent (including for an unapproved spec/plan); narrow request = only that part + one offer line, everything else N/A",
+    "material_change": "in-scope code/asset change outside spec/plan, from working tree OR from commits since a baseline; union of committed + local; unborn HEAD and non-git handled; git inspection before asking the user for a file list",
+    "status_labels": "rencana: / kode tersedia: / terverifikasi: (terverifikasi cites evidence, e.g. command+result or 'kata user')",
+    "coverage": "every changed in-scope item AND every numbered spec requirement gets source + status + output location + disposition (sesuai rencana / menyimpang: <what> / belum dikerjakan)",
+    "human_hands": "type (CLI/dashboard/manual) + place + consequence (or 'belum dapat dipastikan dari repo') + verification; a shell command appears only when readable from the repo, else setting name + location + 'sumber: tidak ada di repo' with NO command; unknown values are <nilai dari kamu>",
+    "evidence_forms": "path:line only when the code exists; otherwise 'as-is <path:line>', 'spec \u00a7n', or 'belum ditelusuri'; negatives use \"Tidak ditemukan dalam cakupan `<command>` (<scope>)\" + residual risk",
+    "deleted_and_renamed": "deleted files are read from the baseline/revision that still contains the old path (e.g. git show <baseline>:<path>), not unconditionally from HEAD or the working tree; a low-similarity rename can surface as A + D, so it must be confirmed before being called new+deleted",
+    "business_impact": "keyed to process change (customer/operator behaviour, money/reporting, access/personal data, manual ops), not a keyword list",
+    "delivery": "may paginate in coherent sections with explicit coverage markers; silent truncation FAILS"
+  },
+  "how_to_run": {
+    "fixtures": "run_evals.py builds simple git repos under fixtures/repos/* and captures real ground truth; no network",
+    "run": "python run_evals.py --out results/ --tag final",
+    "baseline": "python run_evals.py --no-skill --out results/baseline/ --tag baseline",
+    "one_scenario": "python run_evals.py --only out-c-narrow-diagram --out results/",
+    "env": "EVAL_API_KEY (required), EVAL_BASE_URL, EVAL_MODEL",
+    "limits": [
+      "These are FIXTURE-CONTEXT SIMULATIONS: the harness cannot spawn tool-using subagents, so the model is handed the captured terminal output. Tool execution is not exercised.",
+      "Native harness auto-discovery is not exercised; trigger queries are graded with a single-skill description proxy.",
+      "Real tool-using transcripts are produced by the SKILL.md owner's own live runs, not here; they are cited separately rather than duplicated."
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "out-a-spec-only-gate", "moment": "A", "fixture": "a-spec-only", "reps": 2,
+      "coverage": ["momen-a", "gate", "spec-only-no-code", "moment-from-task-phase"],
+      "prompt": "Spec fitur diskon per item sudah saya tulis di docs/specs/item-discount.md.",
+      "criteria": [
+        {"id": "GATE", "text": "The first assistant turn asks exactly one explain-permission question (explain now as a plan, or wait for implementation) and writes no output section and no diagram."},
+        {"id": "MOMENT_TASK_PHASE", "text": "The moment is taken from the task phase (spec just written); pre-existing code already in the repo did not flip it to Momen B."}
+      ]
+    },
+    {
+      "id": "out-a-unapproved-plan-gate", "moment": "A", "fixture": "a-plan-unapproved", "reps": 2,
+      "coverage": ["momen-a", "gate", "unapproved-plan-still-asks"],
+      "prompt": "Plan diskon per item baru saja saya tulis di docs/specs/discount-plan.md. Belum saya setujui.",
+      "criteria": [
+        {"id": "GATE", "text": "The first assistant turn asks exactly one explain-permission question and writes no output section."},
+        {"id": "GATE_IS_EXPLAIN", "text": "The question is the explain-permission question; the run does not refuse, demand approval first, or divert to a planning skill."}
+      ]
+    },
+    {
+      "id": "out-b-committed-clean", "moment": "B", "fixture": "b-committed-clean", "reps": 1,
+      "coverage": ["momen-b", "committed-clean-tree", "no-permission-question", "baseline-from-commits"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "NO_GATE", "text": "The run starts explaining in the same turn and does not ask for permission or approval."},
+        {"id": "NO_FALSE_NO_CHANGE", "text": "It does not conclude 'no changes' from the empty working tree; it uses the commit history as the baseline."},
+        {"id": "ASIS_TOBE", "text": "An ASCII diagram shows AS-IS and TO-BE side by side with real file names and (~)/(+) markers."},
+        {"id": "LAYERS", "text": "Three layers appear in order ELI5 -> scope -> detail."},
+        {"id": "SPEC_REF", "text": "The spec path docs/specs/item-discount.md is referenced near the start."},
+        {"id": "LEDGER", "text": "Each numbered spec requirement gets a disposition: sesuai rencana (with evidence), menyimpang: <what>, or belum dikerjakan (+reason)."}
+      ]
+    },
+    {
+      "id": "out-b-committed-plus-local", "moment": "B", "fixture": "b-committed-plus-local", "reps": 1,
+      "coverage": ["momen-b", "committed+local-union"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "UNION", "text": "The inventory contains BOTH the committed files (app/Cart.php, the new migration, config/cart.php) AND the local files (app/Http/CartController.php modified unstaged, tests/Feature/DiscountTest.php untracked)."},
+        {"id": "COVERAGE", "text": "Each changed file carries a status label (rencana: / kode tersedia: / terverifikasi:) and a source label that matches the captured git state: ' M' unstaged, '??' untracked, index-added staged, committed files cite commit <sha>. 'staged' is a valid source label in general."},
+        {"id": "NO_FALSE_NO_CHANGE", "text": "It does not claim the working tree is clean means nothing changed."}
+      ]
+    },
+    {
+      "id": "out-b-staged", "moment": "B", "fixture": "b-staged", "reps": 1,
+      "coverage": ["momen-b", "staged-changes"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai, perubahannya sudah saya stage.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "NO_GATE", "text": "No permission question; explaining starts in the same turn."},
+        {"id": "COVERAGE", "text": "Every staged code/asset file appears with source 'staged' and a status label."},
+        {"id": "ASIS_TOBE", "text": "AS-IS/TO-BE ASCII diagram with real names and (~)/(+) markers."}
+      ]
+    },
+    {
+      "id": "out-b-unstaged-untracked", "moment": "B", "fixture": "b-unstaged-untracked", "reps": 1,
+      "coverage": ["momen-b", "unstaged-changes", "untracked-file"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "NO_GATE", "text": "No permission question; explaining starts in the same turn."},
+        {"id": "COVERAGE", "text": "The unstaged files and the untracked migration each appear with source unstaged / untracked and a status label; the untracked file is read, not skipped."},
+        {"id": "NO_ABBREV", "text": "No entry is collapsed with 'dst.', '...', or 'dan seterusnya'."}
+      ]
+    },
+    {
+      "id": "out-b-rename-delete", "moment": "B", "fixture": "b-rename-delete", "reps": 2,
+      "coverage": ["momen-b", "rename", "delete", "deleted-file-old-revision"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "RENAME_LINK", "text": "The renamed pair app/Support/Money.php -> app/Support/BackendSupport/Money.php is presented as one relation (not as an unexplained new file plus a separate deletion)."},
+        {"id": "DELETE_OLD_REVISION", "text": "The deleted app/Support/DiscountLegacy.php is accounted for and its content is taken from its old revision, not from the working tree."},
+        {"id": "COVERAGE", "text": "All changed paths (including the new migration and config) appear with source and status labels."}
+      ]
+    },
+    {
+      "id": "out-b-unrelated-changes", "moment": "B", "fixture": "b-unrelated-changes", "reps": 1,
+      "coverage": ["momen-b", "unrelated-listed-only", "out-of-scope-label"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "OUT_OF_SCOPE", "text": "The unrelated edits (app/Support/Money.php, tmp/debug.log) are recorded with a 'di luar scope' style label and a reason, and are not attributed to the discount feature."},
+        {"id": "NO_RELATED_READ", "text": "The run does not claim to have inspected unrelated user work beyond recording it."}
+      ]
+    },
+    {
+      "id": "out-a-spec-then-approved", "moment": "A->output", "fixture": "a-spec-only", "reps": 1, "turns": 2,
+      "coverage": ["momen-a", "gate", "post-approval", "rencana-labels", "planned-files"],
+      "prompt": "Spec fitur diskon per item sudah saya tulis di docs/specs/item-discount.md.",
+      "followups": ["Ya, jelaskan sekarang sebagai rencana."],
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "GATE_THEN_OUTPUT", "text": "Turn 1 asks the permission question and stops; turn 2 produces the explanation."},
+        {"id": "RENCANA_STATUS", "text": "Files that do not exist yet carry status rencana:, not kode tersedia:."},
+        {"id": "LEDGER", "text": "Each numbered spec requirement appears with an explicit disposition (sesuai rencana / menyimpang: <what> / belum dikerjakan) or, in Momen A where nothing is implemented yet, an explicit planned status. A requirement missing from the output fails."},
+        {"id": "SPEC_REF", "text": "The spec path is referenced near the start."}
+      ]
+    },
+    {
+      "id": "out-c-unapproved-spec-explicit", "moment": "C", "fixture": "a-plan-unapproved", "reps": 1,
+      "coverage": ["momen-c", "unapproved-spec", "explicit-request"],
+      "prompt": "Tolong jelaskan plan diskon yang belum saya setujui ini.",
+      "spec": "docs/specs/discount-plan.md",
+      "criteria": [
+        {"id": "NO_GATE", "text": "No permission question; the request is treated as consent."},
+        {"id": "EXPLAINS_UNAPPROVED", "text": "It explains the unapproved plan as decision material instead of refusing or diverting to a planning skill."},
+        {"id": "RENCANA_STATUS", "text": "Planned items are labelled rencana:."}
+      ]
+    },
+    {
+      "id": "out-c-narrow-diagram", "moment": "C", "fixture": "c-login-flow", "reps": 2,
+      "coverage": ["momen-c", "narrow-request", "no-overreach", "one-offer-line"],
+      "prompt": "Tolong buatkan diagram as-is vs to-be untuk perubahan alur login ini.",
+      "spec": "docs/specs/login-flow.md",
+      "criteria": [
+        {"id": "NO_GATE", "text": "No permission question; work starts immediately."},
+        {"id": "NARROW_ONLY", "text": "Only the requested diagram is produced: no ELI5 layer, no scope layer, no business-impact block, no full coverage ledger, and no spec-path requirement enforced."},
+        {"id": "DIAGRAM", "text": "An AS-IS/TO-BE ASCII diagram of the login change with real file names and (~)/(+) markers."},
+        {"id": "ONE_OFFER", "text": "Exactly one short closing line offers to continue with the remaining parts; wording is free."}
+      ]
+    },
+    {
+      "id": "out-b-nongit", "moment": "B", "fixture": "b-nongit", "reps": 1,
+      "coverage": ["non-git-fallback", "git-inspection-before-asking"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "NONGIT", "text": "It does not block on the missing git repo: it inspects the spec and files, states that a diff is unavailable, and still produces the explanation."},
+        {"id": "INVENTORY_FROM_FILES", "text": "The inventory and status labels are derived from the spec and the files on disk."}
+      ]
+    },
+    {
+      "id": "out-b-unborn-head", "moment": "B", "fixture": "b-unborn-head", "reps": 1,
+      "coverage": ["unborn-head", "git-without-commits"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "UNBORN", "text": "It states the repo has no commits yet and builds the inventory from the working tree; it does not present HEAD-based diff output as if it existed."},
+        {"id": "COVERAGE", "text": "Code files present on disk appear with a status label."}
+      ]
+    },
+    {
+      "id": "out-b-ambiguous-range", "moment": "B", "fixture": "b-ambiguous-range", "reps": 1,
+      "coverage": ["ambiguous-range", "clarifying-question-or-labelled-assumption"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "AMBIG", "text": "Two commits exist after base and the feature commit is not labelled. The run either asks one clarifying question about the range (with no output sections) or states an explicit, labelled assumption about which commits are the feature; it does not silently guess and does not say nothing changed."}
+      ]
+    },
+    {
+      "id": "out-b-ops-heavy", "moment": "B", "fixture": "b-ops-heavy", "reps": 1,
+      "coverage": ["human-hands", "dashboard-ops", "missing-secrets", "dns-cron", "no-command-when-not-in-repo"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "HUMAN_HANDS", "text": "Human-hands steps distinguish CLI from dashboard/manual and give place + consequence (or 'belum dapat dipastikan dari repo') + verification."},
+        {"id": "NO_CMD_NOT_IN_REPO", "text": "No shell command is written for a step whose command is not readable from the repo (Stripe dashboard, DNS). Writing no command at all for such a step passes; the 'sumber: tidak ada di repo' tag is needed only when the step's values are not in the repo either."},
+        {"id": "PLACEHOLDER", "text": "Values readable in the repo (webhook URL, OAuth redirect URI, DNS target from docs/runbooks/payments.md) are given concretely; only values not readable anywhere (e.g. the actual webhook secret) are left unknown or asked from the user."},
+        {"id": "NO_INVENTED_SYMPTOMS", "text": "Consequences and error text are either derivable from the repo or explicitly marked 'belum dapat dipastikan dari repo'; conditionals consistent with how the repo reads config are acceptable."}
+      ]
+    },
+    {
+      "id": "out-b-upstream-downstream", "moment": "B", "fixture": "b-upstream-downstream", "reps": 1,
+      "coverage": ["keterkaitan", "upstream-producer", "downstream-consumer", "shared-contract", "negative-form"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "UPSTREAM", "text": "The upstream producer of the value is named with direction B -> A.c (e.g. PricingRule supplying the discount)."},
+        {"id": "DOWNSTREAM", "text": "Downstream consumers (e.g. Tax/InvoiceService, ExportOrderSummary) are named and labelled langsung / tidak langsung."},
+        {"id": "SHARED", "text": "The shared contract (the cart_items.discount_amount column) names its owner and its users."},
+        {"id": "NEGATIVE_FORM", "text": "Any negative claim uses the bounded form 'Tidak ditemukan dalam cakupan `<command>` (<scope>)' or 'belum ditelusuri', plus what is not covered."}
+      ]
+    },
+    {
+      "id": "out-b-unknown-consumers", "moment": "B", "fixture": "b-unknown-consumers", "reps": 1,
+      "coverage": ["negative-evidence", "unknown-external-consumers", "residual-risk"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "NEGATIVE_FORM", "text": "The consumer search is reported with the command and its scope, and what is not covered."},
+        {"id": "UNKNOWN_EXTERNAL", "text": "The external mobile client (separate repo, mentioned in routes/api.php) is flagged as unknown/not verified rather than claimed safe."},
+        {"id": "NO_ABS_NEG", "text": "No absolute claim like 'aman' or 'tidak ada konsumen lain' appears unqualified."},
+        {"id": "NO_FICTIONAL_EVIDENCE", "text": "No invented path:line is given for the external consumer; the evidence is bounded (spec section / comment / belum ditelusuri)."}
+      ]
+    },
+    {
+      "id": "out-b-business-process", "moment": "B", "fixture": "b-business-process", "reps": 2,
+      "coverage": ["business-impact", "process-change", "no-pricing-keyword", "manual-ops"],
+      "prompt": "Implementasi fitur reap keranjang menganggur baru saja selesai.",
+      "spec": "docs/specs/reap-stale-carts.md",
+      "criteria": [
+        {"id": "BUSINESS", "text": "A business-impact block is present because the change alters an operator/customer process (auto-cancelled carts + support marking tickets), even though no pricing, billing, authz, or public route keyword is touched."},
+        {"id": "MANUAL_OPS", "text": "The support step from spec requirement 3 appears as a manual/ops step, not as a CLI command."},
+        {"id": "COVERAGE_SPEC", "text": "Each numbered spec requirement is accounted for."}
+      ]
+    },
+    {
+      "id": "out-b-large-scope", "moment": "B", "fixture": "b-large-scope", "reps": 1,
+      "coverage": ["large-scope", "grouped-diagram", "no-abbreviation", "full-coverage", "pagination-markers"],
+      "prompt": "Implementasi fitur diskon per item baru saja selesai.",
+      "spec": "docs/specs/item-discount.md",
+      "criteria": [
+        {"id": "COVERAGE_ALL", "text": "All fifteen changed files appear somewhere in the coverage output; none is silently dropped."},
+        {"id": "NO_ABBREV", "text": "No entry is collapsed with 'dst.', '...', or 'dan seterusnya'."},
+        {"id": "GROUPED_DIAGRAM", "text": "With more than eight boxes the diagram shows the main path plus grouped boxes that refer to the coverage map."},
+        {"id": "NO_TRUNCATION", "text": "If the answer is split into parts, each part states explicit coverage markers."}
+      ]
+    },
+    {
+      "id": "out-b-refactor-nonbusiness", "moment": "C", "fixture": "b-refactor", "reps": 1,
+      "coverage": ["no-business-impact", "refactor-and-dependency"],
+      "prompt": "Implementasi selesai: cuma menaikkan versi phpunit dan mengganti nama helper internal (Money::format -> Money::display). Tolong jelaskan perubahan ini.",
+      "spec": "docs/specs/phpunit-bump.md",
+      "criteria": [
+        {"id": "NOT_BUSINESS", "text": "It states there is no business impact with a repo-grounded reason and invents no actors, money, or access claims. Exact formatting (one line vs a sentence under a heading) is irrelevant."},
+        {"id": "COVERAGE", "text": "app/Support/Money.php and composer.json both appear with source and status."}
+      ]
+    }
+  ],
+  "trigger_queries": {
+    "mode": "description-only proxy in a fresh context; NOT native harness auto-triggering",
+    "reps": 1,
+    "queries": [
+      {"id": "P4", "query": "Jelaskan dampak bisnis dari fitur langganan yang baru kita tambahkan.", "expected_trigger": true},
+      {"id": "P7", "query": "Apa yang harus saya jalankan manual di server setelah deploy ini?", "expected_trigger": true},
+      {"id": "P8", "query": "Tolong jelaskan relasi fitur A dan C, dan dampaknya ke B.", "expected_trigger": true},
+      {"id": "P2", "query": "Implementasi fitur export PDF sudah kelar. Tolong jelaskan apa saja yang berubah.", "expected_trigger": true},
+      {"id": "N2", "query": "Jelaskan arsitektur seluruh codebase ini.", "expected_trigger": false},
+      {"id": "N7", "query": "Jelaskan apa itu dependency injection.", "expected_trigger": false},
+      {"id": "N9", "query": "Ringkas percakapan kita jadi dokumen handoff.", "expected_trigger": false},
+      {"id": "N5", "query": "Jelaskan cara kerja php artisan config:clear.", "expected_trigger": false}
+    ]
+  }
+}
