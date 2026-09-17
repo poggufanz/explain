@@ -35,11 +35,11 @@ outside the skill folder and are **not** installed with the skill. Results under
 
 ## Install
 
-Install from the GitHub repository `poggufanz/explain`:
+Install from the GitHub repository `poggufanz/skills`:
 
 ```bash
-npx skills add poggufanz/explain --list
-npx skills add poggufanz/explain --skill explain
+npx skills add poggufanz/skills --list
+npx skills add poggufanz/skills --skill explain
 ```
 
 ## Badge
@@ -47,7 +47,7 @@ npx skills add poggufanz/explain --skill explain
 Markdown for the badge:
 
 ```markdown
-[![skills.sh](https://skills.sh/b/poggufanz/explain)](https://skills.sh/poggufanz/explain)
+[![skills.sh](https://skills.sh/b/poggufanz/skills)](https://skills.sh/poggufanz/skills)
 ```
 
-Skill page: https://skills.sh/poggufanz/explain/explain
+Skill page: https://skills.sh/poggufanz/skills/explain
