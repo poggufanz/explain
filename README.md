@@ -35,17 +35,19 @@ outside the skill folder and are **not** installed with the skill. Results under
 
 ## Install
 
-Replace `<owner>` and `<repo>` with the GitHub owner and repository name:
+Install from the GitHub repository `poggufanz/explain`:
 
 ```bash
-npx skills add <owner>/<repo> --list
-npx skills add <owner>/<repo> --skill explain
+npx skills add poggufanz/explain --list
+npx skills add poggufanz/explain --skill explain
 ```
 
 ## Badge
 
-Replace `<owner>` and `<repo>` as above:
+Markdown for the badge:
 
 ```markdown
-[![skills.sh](https://skills.sh/b/<owner>/<repo>)](https://skills.sh/<owner>/<repo>)
+[![skills.sh](https://skills.sh/b/poggufanz/explain)](https://skills.sh/poggufanz/explain)
 ```
+
+Skill page: https://skills.sh/poggufanz/explain/explain
